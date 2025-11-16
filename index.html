@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="top-nav">
+        <h1>Finance Tracker</h1>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <nav>
+                <button class="nav-btn active" data-view="Dashboard" onclick="setView('Dashboard')">
+                    Dashboard
+                </button>
+                <button class="nav-btn" data-view="AddExpense" onclick="setView('AddExpense')">
+                    Add Expense
+                </button>
+                <button class="nav-btn" data-view="Budgets" onclick="setView('Budgets')">
+                    Budgets
+                </button>
+                <button class="nav-btn" data-view="Reports" onclick="setView('Reports')">
+                    Reports
+                </button>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div id="view-Dashboard" class="view">
+                <h2>Dashboard</h2>
+                
+                <div class="summary-cards">
+                    <div class="card">
+                        <h3>Total Spent This Month</h3>
+                        <p class="card-value" id="total-spent">$0.00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Number of Transactions This Month</h3>
+                        <p class="card-value" id="transaction-count">0</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Recent Expenses</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Mood</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-expenses-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="setView('AddExpense')">Add Expense</button>
+                    <button class="btn btn-secondary" onclick="setView('Budgets')">Go to Budgets</button>
+                    <button class="btn btn-secondary" onclick="setView('Reports')">Go to Reports</button>
+                    <button class="btn btn-secondary"
+                            style="margin-left:auto; background-color:#e74c3c;"
+                            onclick="resetAllTransactions()">
+                        Reset All Transactions
+                    </button>
+                </div>
+            </div>
+
+            <div id="view-AddExpense" class="view" style="display: none;">
+                <h2>Add Expense</h2>
+                
+                <form id="add-expense-form" class="expense-form">
+                    <div class="form-group">
+                        <label for="expense-amount">Amount *</label>
+                        <input 
+                            type="number" 
+                            id="expense-amount" 
+                            name="amount" 
+                            required 
+                            min="0.01" 
+                            step="0.01"
+                            placeholder="0.00"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expense-category">Category *</label>
+                        <select id="expense-category" name="category" required>
+                            <option value="">Select a category</option>
+                            <option value="Food">Food</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expense-date">Date *</label>
+                        <input 
+                            type="date" 
+                            id="expense-date" 
+                            name="date" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>How do you feel about this purchase?</label>
+                        <div class="mood-selector">
+                            <label class="mood-option">
+                                <input type="radio" name="expense-mood" value="happy">
+                                <span>😊 Happy</span>
+                            </label>
+                            <label class="mood-option">
+                                <input type="radio" name="expense-mood" value="neutral" checked>
+                                <span>😐 Okay</span>
+                            </label>
+                            <label class="mood-option">
+                                <input type="radio" name="expense-mood" value="sad">
+                                <span>😢 Regret</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expense-note">Note</label>
+                        <textarea 
+                            id="expense-note" 
+                            name="note" 
+                            rows="3"
+                            placeholder="Optional note about this expense"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Expense</button>
+                        <button type="button" class="btn btn-secondary" onclick="setView('Dashboard')">Cancel</button>
+                    </div>
+                </form>
+
+                <div id="expense-message" class="message"></div>
+            </div>
+
+            <div id="view-Budgets" class="view" style="display: none;">
+                <h2>Budgets</h2>
+                
+                <div class="section">
+                    <table class="budget-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Monthly Budget</th>
+                                <th>Spent This Month</th>
+                                <th>Remaining</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody id="budgets-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="handleSaveBudgets()">Save Budgets</button>
+                </div>
+
+                <div id="budget-message" class="message"></div>
+            </div>
+
+            <div id="view-Reports" class="view" style="display: none;">
+                <h2>Reports</h2>
+                
+                <div class="reports-controls">
+                    <div class="form-group">
+                        <label for="report-month">Month</label>
+                        <select id="report-month" onchange="renderReports()"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>View Mode</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="view-mode" value="category" checked onchange="renderReports()">
+                                By Category
+                            </label>
+                            <label>
+                                <input type="radio" name="view-mode" value="month" onchange="renderReports()">
+                                By Month
+                            </label>
+                            <label>
+                                <input type="radio" name="view-mode" value="comparison" onchange="renderReports()">
+                                Comparison
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 id="report-chart-title">Spending by Category</h3>
+                    <div id="report-chart"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Expense Details</h3>
+
+                    <div class="export-controls" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+                        <div style="font-size: 0.9rem;">
+                            <strong>Export mode:</strong>
+                            <label style="margin-left: 0.75rem;">
+                                <input type="radio" name="export-mode" value="chart" checked>
+                                Chart data
+                            </label>
+                            <label style="margin-left: 0.75rem;">
+                                <input type="radio" name="export-mode" value="raw">
+                                Raw transactions
+                            </label>
+                        </div>
+
+                        <div class="action-buttons" style="margin-top: 0; margin-bottom: 0; gap: 0.5rem;">
+                            <button class="btn btn-secondary" type="button" onclick="downloadReportCSV()">
+                                Download CSV
+                            </button>
+                            <button class="btn btn-secondary" type="button" onclick="downloadChartImage()">
+                                Download Chart Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Mood</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-expenses-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
