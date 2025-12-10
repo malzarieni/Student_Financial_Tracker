@@ -111,7 +111,7 @@ function renderDashboard() {
     tbody.innerHTML = '';
     
     if (recentExpenses.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">No expenses yet</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">No expenses yet</td></tr>';
     } else {
         recentExpenses.forEach(exp => {
             const row = document.createElement('tr');
@@ -119,8 +119,12 @@ function renderDashboard() {
                 <td>${formatDate(exp.date)}</td>
                 <td>${exp.category}</td>
                 <td>${formatCurrency(exp.amount)}</td>
-                <td>${getMoodEmoji(exp.mood || 'neutral')}</td>
+                <td class="mood-cell">${getMoodEmoji(exp.mood || 'neutral')}</td>
                 <td>${exp.note || '-'}</td>
+                <td>
+                    <button class="btn btn-secondary btn-sm" onclick="editExpense(${exp.id})">Edit</button>
+                    <button class="btn btn-secondary btn-sm" onclick="deleteExpense(${exp.id})">Delete</button>
+                </td>
             `;
             tbody.appendChild(row);
         });
@@ -531,7 +535,7 @@ function renderReportExpensesTable(expensesToShow) {
     tbody.innerHTML = '';
     
     if (expensesToShow.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">No expenses for this period</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">No expenses for this period</td></tr>';
     } else {
         const sorted = [...expensesToShow].sort((a, b) => new Date(b.date) - new Date(a.date));
         
@@ -541,12 +545,59 @@ function renderReportExpensesTable(expensesToShow) {
                 <td>${formatDate(exp.date)}</td>
                 <td>${exp.category}</td>
                 <td>${formatCurrency(exp.amount)}</td>
-                <td>${getMoodEmoji(exp.mood || 'neutral')}</td>
+                <td class="mood-cell">${getMoodEmoji(exp.mood || 'neutral')}</td>
                 <td>${exp.note || '-'}</td>
+                <td>
+                    <button class="btn btn-secondary btn-sm" onclick="editExpense(${exp.id})">Edit</button>
+                    <button class="btn btn-secondary btn-sm" onclick="deleteExpense(${exp.id})">Delete</button>
+                </td>
             `;
             tbody.appendChild(row);
         });
     }
+}
+
+/* NEW: delete & edit single expense */
+
+function deleteExpense(id) {
+    if (!confirm('Delete this expense?')) return;
+
+    expenses = expenses.filter(exp => exp.id !== id);
+    saveState();
+
+    // Re-render current views so tables stay in sync
+    renderDashboard();
+    const reportsView = document.getElementById('view-Reports');
+    if (reportsView && reportsView.style.display !== 'none') {
+        renderReports();
+    }
+    const budgetsView = document.getElementById('view-Budgets');
+    if (budgetsView && budgetsView.style.display !== 'none') {
+        renderBudgets();
+    }
+}
+
+function editExpense(id) {
+    const exp = expenses.find(e => e.id === id);
+    if (!exp) return;
+
+    document.getElementById('expense-amount').value = exp.amount;
+    document.getElementById('expense-category').value = exp.category;
+    document.getElementById('expense-date').value = exp.date;
+    document.getElementById('expense-note').value = exp.note || '';
+
+    const moodRadio = document.querySelector(
+        `input[name="expense-mood"][value="${exp.mood || 'neutral'}"]`
+    );
+    if (moodRadio) {
+        moodRadio.checked = true;
+    }
+
+    // Remove the original entry so saving creates an updated one
+    expenses = expenses.filter(e => e.id !== id);
+    saveState();
+
+    setView('AddExpense');
 }
 
 function downloadReportCSV() {
